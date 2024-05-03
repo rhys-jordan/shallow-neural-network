@@ -1,21 +1,19 @@
-# -*- coding: utf-8 -*-
 """
-Created on Mon Apr 29 13:51:12 2024
-
-@author: rhysj
-
+Source: 
 https://www.linkedin.com/pulse/shallow-neural-network-from-scratch-deeplearningai-assignment-kim/
 """
 
 import numpy as np
 import matplotlib.pyplot as plt
 
+#Plots predicted output with expected output
 def plotResults(X, Y, results):
     plt.axhline(0, color='grey', ls =":")
     plt.plot(X, results, color="black", linestyle='solid')
     plt.plot(X, Y, color="blue", linestyle='solid')
     plt.axis([0, 2, -1, 1])
     plt.show()
+
 
 
 def reLU(x):
@@ -43,6 +41,16 @@ def initalize_parameters(n_x, n_h, n_y):
                   "b2": b2}
     return parameters
 
+
+'''
+Had to do some size checking with the parameter matrices to see what the output size 
+was going to because it differed from the article I followed. Also reduced the amount of
+activation functions used in the article because I just wanted to look at activation function
+on the hidden layers not the output. 
+
+Commented out whatever activation function I wasn't using but I messed around with 
+sigmoid and relu functin which are implemeneted above
+'''
 def forward_propagation(X, parameters):
     X = np.reshape(X, (21,1))
     W1 = parameters["W1"]
@@ -51,10 +59,9 @@ def forward_propagation(X, parameters):
     b2 = parameters["b2"]
     Z1 = np.dot(W1,X)+b1
     A1 = sigmoid(Z1)
+    #A1 = reLU(Z1)
     Z2 = np.dot(W2,A1)+b2
-    #A2 = reLU(Z2)
     
-    #assert(Z2.shape == (1, X.shape[1]))
     assert(Z2.shape == (X.shape[0],1))
     
     cache = {"Z1": Z1,
@@ -64,6 +71,10 @@ def forward_propagation(X, parameters):
     
     return Z2, cache
     
+
+'''
+Used a differnt cost function then the one in the article so I implemented MSE
+'''
 #Cost function    
 def mean_squared_error(act, pred):
    diff = pred - act
@@ -71,6 +82,11 @@ def mean_squared_error(act, pred):
    mean_diff = differences_squared.mean()
    return mean_diff  
 
+
+'''
+Got this staright from the article. Ran out of time to fully break down the 
+calculations and understand them 
+'''
 def backward_propagation(parameters, cache, X, Y):
     m = X.shape[1]
     W1 = parameters["W1"]
@@ -91,7 +107,13 @@ def backward_propagation(parameters, cache, X, Y):
     
     return grads    
 
-def update_parameters(parameters, grads, learning_rate = .09):
+
+'''
+Experimented with the learning rate to see how fast the function converged
+A smaller learning rate converged slower  (0.07)
+A larger learnng rate converged faster (1.5)
+'''
+def update_parameters(parameters, grads, learning_rate = 1.5):
     W1 = parameters["W1"]
     b1 = parameters["b1"]
     W2 = parameters["W2"]
@@ -113,7 +135,8 @@ def update_parameters(parameters, grads, learning_rate = .09):
     return parameters
 
 
-def nn_model(X, Y, n_h, num_iterations = 10000, print_cost=False):
+#Put all the parts of the model togther
+def nn_model(X, Y, n_h, num_iterations = 10, print_cost=False):
     np.random.seed(3)
     n_x = layer_sizes(X, Y)[0]
     n_y = layer_sizes(X, Y)[2]
@@ -124,72 +147,52 @@ def nn_model(X, Y, n_h, num_iterations = 10000, print_cost=False):
     b2 = parameters["b2"]
     for i in range(0, num_iterations):
         A2, cache = forward_propagation(X, parameters)
-        #plotResults(X, Y, A2)
         cost = mean_squared_error(A2, Y)
         grads = backward_propagation(parameters, cache, X, Y)
         parameters = update_parameters(parameters, grads)
         plotResults(X, Y, A2)
         print ("Cost after iteration %i: %f" %(i, cost))
-        '''
-        if print_cost and i % 10 == 0:
-            plotResults(X, Y, A2)
-            print ("Cost after iteration %i: %f" %(i, cost))
-        '''
-    return parameters
     
+    return parameters
+
+
+#X-axis from 0-2 counting by 0.1    
 X = np.arange(0.0, 2.1, .1).reshape((21,1))
+
 '''
-Y = np.array([0.7, 0.65, 0.57, 0.5, 0.48,
+This is the first line I got the model to approximate 
+It is the same as the line from the other script replicating the
+line form the textbook
+'''
+Y1 = np.array([0.7, 0.65, 0.57, 0.5, 0.48,
                 0.4, 0.3, 0.15, 0.05, -0.2, 
                 -0.3, -0.27, -0.25, -0.22, -0.2,
                 -0.1, -0.05, 0, 0.1, 0.2, 0.2]).reshape((21,1))
-'''
 
-Y = np.array([0.7, -0.6, 0.5, -0.2, 0.01,
+'''
+This is the second line which is random and crazy just to see how well
+the model would approximate it. 
+'''
+Y2 = np.array([0.7, -0.6, 0.5, -0.2, 0.01,
                 0.2, -0.3, 0.5, -0.05, -0.3, 
                 -0.5, -0.7, -0.3, -0.7, -0.2,
                 0.1, -0.05, .5, 0.1, 0.2, 0.2]).reshape((21,1))
-print("Input Shape: " + str(X.shape))
-print("Output Shape: " + str(Y.shape))
+
+#Set y to be the line you want to aproximate
+Y = Y2
+
 
 plt.axhline(0, color='grey', ls =":")
 plt.plot(X, Y, color="blue", linestyle='solid')
 plt.axis([0, 2, -1, 1])
+plt.title("Line to Approximate")
 plt.show()
 
-nn_model(X,Y, 3, 10,True)
-
-
 '''
-plt.axhline(0, color='grey', ls =":")
-#plt.plot(x, results, color="black", linestyle='solid')
-plt.plot(X, Y, color="blue", linestyle='solid')
-plt.axis([0, 2, -1, 1])
-plt.show()
-n_x = layer_sizes(X, Y)[0]
-n_y = layer_sizes(X, Y)[2]
-
-
-parameters = initalizeParameters(n_x, 3, n_y)
-W1 = parameters["W1"]
-b1 = parameters["b1"]
-W2 = parameters["W2"]
-b2 = parameters["b2"]
-#forward_propagation
-
-Z2, cache = forward_propagation(X, parameters)
-
-mse = mean_squared_error(Y, Z2)
-#print(mse)
-
-grads= backward_propagation(parameters,cache, X, Y)
-
-update_parameters(parameters, grads)
-
-#print(grads)
-
-#print(Z2)
-#plotResults(X, Y, Z2)
-#plt.plot(X, Z2, color="blue", linestyle='solid')
-#plt.show()
+Increased the iteration but found that because the line were relitivly simple
+it didn't make sense to have a lot of iterations
+10 was perfect to see the line converge but show what changing the hyperparameters
+would do
 '''
+#Run the model with 3 node and 10 iterations
+nn_model(X,Y, 3, 10 ,True)
